@@ -189,14 +189,11 @@
 ;; auto-completion and code snippets
 
 (use-package yasnippet
-  :ensure
+  :ensure t
   :config
   (yas-reload-all)
   (add-hook 'prog-mode-hook 'yas-minor-mode)
   (add-hook 'text-mode-hook 'yas-minor-mode))
-
-(use-package company-lsp
-  :ensure t)
 
 (use-package company
   :ensure
@@ -343,4 +340,6 @@
   :after (treemacs persp-mode) ;;or perspective vs. persp-mode
   :ensure t
   :config (treemacs-set-scope-type 'Perspectives))
+
+
 
