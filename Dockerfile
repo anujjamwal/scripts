@@ -9,5 +9,7 @@ RUN source $HOME/.cargo/env; rustup component add rls rust-analysis rust-src
 RUN pacman -S --noconfirm emacs git valgrind clang jdk8-openjdk
 
 COPY emacs/init.el /root/.emacs.d/init.el
-
 RUN emacs --daemon
+
+ENV PATH="/root/.cargo/bin:${PATH}"
+
