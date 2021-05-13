@@ -14,6 +14,9 @@
   (package-refresh-contents)
   (package-install 'use-package))
 
+(use-package use-package-ensure-system-package
+  :ensure t)
+
 ;; Look and Feel
 (use-package gruvbox-theme
   :ensure t
@@ -22,6 +25,7 @@
 (load-theme 'gruvbox-dark-medium t)
 (set-face-attribute 'default nil :font "Menlo" :height 130)
 (global-display-line-numbers-mode)
+
 
 ;; Simple Enhancements
 (use-package diminish
@@ -34,9 +38,12 @@
   :config
   (global-set-key (kbd "C-x g") 'magit-status))
 
-(use-package projectile :ensure t)
+(use-package compile
+  :init
+  (progn
+    (setq compilation-scroll-output t)))
 
-(use-package flycheck :ensure t)
+(use-package projectile :ensure t)
 
 (use-package hydra :ensure t)
 
@@ -45,7 +52,10 @@
 (use-package helm
   :ensure t
   :diminish
+  :config (setq helm-use-frame-when-more-than-two-windows t)
+        (setq helm-split-window-in-side-p t)
   :init (helm-mode t)
+        (helm-autoresize-mode 1)
   :bind (("M-x"     . helm-M-x)
         ("C-x C-f" . helm-find-files)
         ("C-x b"   . helm-mini)     ;; See buffers & recent files; more useful.
@@ -87,11 +97,6 @@
   :hook
   (rustic-mode-hook . lang/configure-rust)
   :config
-  ;; uncomment for less flashiness
-  ;; (setq lsp-eldoc-hook nil)
-  ;; (setq lsp-enable-symbol-highlighting nil)
-  ;; (setq lsp-signature-auto-activate nil)
-
   ;; comment to disable rustfmt on save
   (setq rustic-format-on-save t)
   (defun lang/configure-rust()
@@ -100,7 +105,6 @@
     (setq-local buffer-save-without-query t)))
 
 ;; for Cargo.toml and other config files
-
 (use-package toml-mode :ensure)
 
 
@@ -144,25 +148,26 @@
   :commands lsp
   :hook (scala-mode . company-mode)
         (lsp-mode . lsp-lens-mode)
-  :config (setq lsp-prefer-flymake nil)
-          (setq lsp-modeline-diagnostics-scope :workspace)
   :bind (:map lsp-mode-map
               ("C-c C-d" . lsp-describe-thing-at-point)
               ([remap xref-find-definitions] . lsp-find-definition)
               ([remap xref-find-references] . lsp-find-references))
-  :custom (lsp-rust-analyzer-cargo-watch-command "clippy")
-  (lsp-idle-delay 0.6)
-  (lsp-rust-analyzer-server-display-inlay-hints t))
+  :custom (progn
+            (setq lsp-prefer-flymake nil)
+            (setq lsp-modeline-diagnostics-scope :workspace)
+            (lsp-rust-analyzer-cargo-watch-command "clippy")
+            (lsp-idle-delay 0.6)
+            (lsp-rust-analyzer-server-display-inlay-hints t)))
 
 (use-package lsp-ui
   :ensure
   :commands lsp-ui-mode
-  :custom (lsp-ui-sideline-show-diagnostics t)
-          (lsp-ui-sideline-show-code-actions t)
-          (lsp-ui-peek-always-show t)
-          (lsp-ui-sideline-show-hover t)
-	        (lsp-ui-sideline-enable t)
-          (lsp-ui-doc-enable t))
+  :custom (setq lsp-ui-sideline-show-diagnostics t)
+          (setq lsp-ui-sideline-show-code-actions t)
+          (setq lsp-ui-peek-always-show t)
+          (setq lsp-ui-sideline-show-hover t)
+	        (setq lsp-ui-sideline-enable t)
+          (setq lsp-ui-doc-enable t))
 
 (use-package lsp-treemacs
          :after lsp-mode
@@ -182,7 +187,13 @@
 
 (use-package flycheck
   :ensure t
-  :init (global-flycheck-mode))
+  :init (add-hook 'prog-mode-hook 'flycheck-mode)
+  :hook (flycheck-mode . flycheck-config-fn)
+  :config (progn
+            (defun flycheck-config-fn()
+             (flycheck-set-indication-mode 'left-margin)
+            (setf left-margin-width 3)
+            (set-window-buffer (selected-window) (current-buffer)))))
 
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -207,33 +218,6 @@
   (:map company-mode-map
         ("<tab>". tab-indent-or-complete)
         ("TAB". tab-indent-or-complete)))
-
-(defun company-yasnippet-or-completion ()
-  (interactive)
-  (or (do-yas-expand)
-      (company-complete-common)))
-
-(defun check-expansion ()
-  (save-excursion
-    (if (looking-at "\\_>") t
-      (backward-char 1)
-      (if (looking-at "\\.") t
-        (backward-char 1)
-        (if (looking-at "::") t nil)))))
-
-(defun do-yas-expand ()
-  (let ((yas/fallback-behavior 'return-nil))
-    (yas/expand)))
-
-(defun tab-indent-or-complete ()
-  (interactive)
-  (if (minibufferp)
-      (minibuffer-complete)
-    (if (or (not yas/minor-mode)
-            (null (do-yas-expand)))
-        (if (check-expansion)
-            (company-complete-common)
-          (indent-for-tab-command)))))
 
 ;; ==========================================================
 ;; Use the Debug Adapter Protocol for running tests and debugging
