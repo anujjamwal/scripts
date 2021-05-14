@@ -25,7 +25,7 @@
 (load-theme 'gruvbox-dark-medium t)
 (set-face-attribute 'default nil :font "Menlo" :height 130)
 (global-display-line-numbers-mode)
-
+(setq auto-save-default nil)
 
 ;; Simple Enhancements
 (use-package diminish
@@ -214,10 +214,7 @@
               ("C-n". company-select-next)
               ("C-p". company-select-previous)
               ("M-<". company-select-first)
-              ("M->". company-select-last))
-  (:map company-mode-map
-        ("<tab>". tab-indent-or-complete)
-        ("TAB". tab-indent-or-complete)))
+              ("M->". company-select-last)))
 
 ;; ==========================================================
 ;; Use the Debug Adapter Protocol for running tests and debugging
