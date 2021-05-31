@@ -24,5 +24,5 @@ jobs:
           push: true
           tags: |
             docker.pkg.github.com/${{ github.repository }}/devbox:${{ github.sha }}
-            docker.pkg.github.com/${{ github.repository }}/devbox:${{ github.ref }}
+            docker.pkg.github.com/${{ github.repository }}/devbox:latest
 
