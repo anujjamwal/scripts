@@ -12,7 +12,9 @@
 
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
-  (package-install 'use-package))
+  (package-install 'use-package)
+  (require 'use-package)
+  (setq use-package-always-ensure t))
 
 (use-package use-package-ensure-system-package
   :ensure t)
@@ -20,12 +22,16 @@
 ;; Look and Feel
 (use-package gruvbox-theme
   :ensure t
-  :defer t)
+  :demand t
+  :init
+    (load-theme 'gruvbox-dark-medium t)
+    (set-face-attribute 'default nil :font "Menlo" :height 130)
+    (global-display-line-numbers-mode)
+    (setq auto-save-default nil)
 
-(load-theme 'gruvbox-dark-medium t)
-(set-face-attribute 'default nil :font "Menlo" :height 130)
-(global-display-line-numbers-mode)
-(setq auto-save-default nil)
+    ;; backup in one place. flat, no tree structure.
+    (setq backup-directory-alist '(("" . "~/.emacs.d/backup")))
+    (setq backup-by-copying t))
 
 ;; Simple Enhancements
 (use-package diminish
@@ -97,12 +103,11 @@
   :hook
   (rustic-mode-hook . lang/configure-rust)
   :config
+  (setq rustic-lsp-server 'rust-analyzer)
   ;; comment to disable rustfmt on save
   (setq rustic-format-on-save t)
-  (defun lang/configure-rust()
-    (setq tab-width 2)
   ;; so that run C-c C-c C-r works without having to confirm
-    (setq-local buffer-save-without-query t)))
+  (setq-local buffer-save-without-query t))
 
 ;; for Cargo.toml and other config files
 (use-package toml-mode :ensure)
@@ -200,21 +205,59 @@
 ;; auto-completion and code snippets
 
 (use-package yasnippet
+  :defer 1
   :ensure t
   :config
   (yas-reload-all)
   (add-hook 'prog-mode-hook 'yas-minor-mode)
   (add-hook 'text-mode-hook 'yas-minor-mode))
 
+(use-package yasnippet-snippets
+  :ensure t
+  :after yasnippet
+  :config (yasnippet-snippets-initialize))
+
 (use-package company
   :ensure
+  :defer 1
   :hook (scala-mode . company-mode)
   :bind
+  (:map company-mode-map
+	  ("<tab>". tab-indent-or-complete)
+	  ("TAB". tab-indent-or-complete))
   (:map company-active-map
-              ("C-n". company-select-next)
-              ("C-p". company-select-previous)
-              ("M-<". company-select-first)
-              ("M->". company-select-last)))
+    ("C-n". company-select-next)
+    ("C-p". company-select-previous)
+    ("M-<". company-select-first)
+    ("M->". company-select-last)))
+
+(defun company-yasnippet-or-completion ()
+  (interactive)
+  (or (do-yas-expand)
+      (company-complete-common)))
+
+(defun check-expansion ()
+  (save-excursion
+    (if (looking-at "\\_>") t
+      (backward-char 1)
+      (if (looking-at "\\.") t
+        (backward-char 1)
+        (if (looking-at "::") t nil)))))
+
+(defun do-yas-expand ()
+  (let ((yas/fallback-behavior 'return-nil))
+    (yas/expand)))
+
+(defun tab-indent-or-complete ()
+  (interactive)
+  (if (minibufferp)
+      (minibuffer-complete)
+    (if (or (not yas/minor-mode)
+            (null (do-yas-expand)))
+        (if (check-expansion)
+            (company-complete-common)
+          (indent-for-tab-command)))))
+
 
 ;; ==========================================================
 ;; Use the Debug Adapter Protocol for running tests and debugging
@@ -223,6 +266,7 @@
 
 (use-package dap-mode
   :ensure t
+  :defer 1
   :hook
   (lsp-mode . dap-mode)
   (lsp-mode . dap-ui-mode)

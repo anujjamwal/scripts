@@ -1,0 +1,19 @@
+# -*- mode: snippet -*-
+# name: Line Reader
+# key: reader
+# --
+struct LineReader {}
+
+impl Iterator for LineReader { 
+  type Item = String;
+
+  fn next(&mut self) -> Option<Self::Item> {
+    let mut buffer = String::new();
+    std::io::stdin()
+      .read_line(&mut buffer)
+      .unwrap()
+
+    Some(buffer.trim())
+  }
+}
+
