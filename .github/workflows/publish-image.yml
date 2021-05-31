@@ -23,6 +23,6 @@ jobs:
         with:
           push: true
           tags: |
-            docker.pkg.github.com/${{ github.repository }}/devbox:${{ github.sha }}
-            docker.pkg.github.com/${{ github.repository }}/devbox:latest
+            ghcr.io/${{ github.repository }}/devbox:${{ github.sha }}
+            ghcr.io/${{ github.repository }}/devbox:latest
 
