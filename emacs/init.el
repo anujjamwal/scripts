@@ -101,13 +101,14 @@
           ("C-c C-c d" . dap-hydra)
           ("C-c C-c h" . lsp-ui-doc-glance))
   :hook
-  (rustic-mode-hook . lang/configure-rust)
+  (rustic-mode-hook . rk/rustic-mode-hook)
   :config
   (setq rustic-lsp-server 'rust-analyzer)
   ;; comment to disable rustfmt on save
   (setq rustic-format-on-save t)
-  ;; so that run C-c C-c C-r works without having to confirm
-  (setq-local buffer-save-without-query t))
+  (defun rk/rustic-mode-hook ()
+    ;; so that run C-c C-c C-r works without having to confirm
+    (setq-local buffer-save-without-query t)))
 
 ;; for Cargo.toml and other config files
 (use-package toml-mode :ensure)
@@ -167,12 +168,14 @@
 (use-package lsp-ui
   :ensure
   :commands lsp-ui-mode
-  :custom (setq lsp-ui-sideline-show-diagnostics t)
-          (setq lsp-ui-sideline-show-code-actions t)
-          (setq lsp-ui-peek-always-show t)
-          (setq lsp-ui-sideline-show-hover t)
-	        (setq lsp-ui-sideline-enable t)
-          (setq lsp-ui-doc-enable t))
+  :bind (:map rustic-mode-map
+          ("C-c C-c h" . lsp-ui-doc-glance))
+  :custom (lsp-ui-sideline-show-diagnostics t)
+          (lsp-ui-sideline-show-code-actions t)
+          (lsp-ui-peek-always-show t)
+          (lsp-ui-sideline-show-hover t)
+	        (lsp-ui-sideline-enable t)
+          (lsp-ui-doc-enable nil))
 
 (use-package lsp-treemacs
          :after lsp-mode

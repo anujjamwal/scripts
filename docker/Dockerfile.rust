@@ -8,6 +8,9 @@ RUN pacman -S --noconfirm curl emacs git valgrind clang jdk8-openjdk
 RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
 RUN source $HOME/.cargo/env; rustup component add rls rust-analysis rust-src
 
+RUN git clone https://github.com/rust-analyzer/rust-analyzer.git
+RUN source $HOME/.cargo/env; cd rust-analyzer && cargo xtask install --server
+
 COPY emacs /root/.emacs.d
 RUN emacs --daemon
 
