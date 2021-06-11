@@ -6,26 +6,28 @@
 (add-to-list 'package-archives '("tromey" . "http://tromey.com/elpa/"))
 (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/") t)
 (setq package-user-dir (expand-file-name "elpa/" user-emacs-directory))
-(package-initialize)
 
-;; Install use-package that we require for managing all other dependencies
+(unless (package-installed-p 'quelpa)
+  (with-temp-buffer
+    (url-insert-file-contents "https://raw.githubusercontent.com/quelpa/quelpa/master/quelpa.el")
+    (eval-buffer)
+    (quelpa-self-upgrade)))
 
-(unless (package-installed-p 'use-package)
-  (package-refresh-contents)
-  (package-install 'use-package)
-  (require 'use-package)
-  (setq use-package-always-ensure t))
+(quelpa
+ '(quelpa-use-package
+   :fetcher git
+   :url "https://github.com/quelpa/quelpa-use-package.git"))
 
-(use-package use-package-ensure-system-package
-  :ensure t)
+(require 'quelpa-use-package)
 
 ;; Look and Feel
+
 (use-package gruvbox-theme
   :ensure t
   :demand t
   :init
     (load-theme 'gruvbox-dark-medium t)
-    (set-face-attribute 'default nil :font "Menlo" :height 130)
+    (set-face-attribute 'default nil :family "Robot Mono" :height 130)
     (global-display-line-numbers-mode)
     (setq auto-save-default nil)
 
@@ -53,7 +55,16 @@
 
 (use-package hydra :ensure t)
 
-(use-package which-key :ensure t :config (which-key-mode))
+(use-package which-key
+  :ensure t
+  :init
+  (which-key-mode)
+  :config
+  (which-key-setup-side-window-right-bottom)
+  (setq which-key-sort-order 'which-key-key-order-alpha
+    which-key-side-window-max-width 0.33
+    which-key-idle-delay 0.05)
+  :diminish which-key-mode)
 
 (use-package helm
   :ensure t
@@ -158,12 +169,12 @@
               ("C-c C-d" . lsp-describe-thing-at-point)
               ([remap xref-find-definitions] . lsp-find-definition)
               ([remap xref-find-references] . lsp-find-references))
-  :custom (progn
-            (setq lsp-prefer-flymake nil)
-            (setq lsp-modeline-diagnostics-scope :workspace)
-            (lsp-rust-analyzer-cargo-watch-command "clippy")
-            (lsp-idle-delay 0.6)
-            (lsp-rust-analyzer-server-display-inlay-hints t)))
+  :config (setq lsp-prefer-flymake nil)
+         (setq lsp-enable-imenu nil)
+         (setq lsp-modeline-diagnostics-scope :workspace)
+         (setq lsp-rust-analyzer-cargo-watch-command "clippy")
+         (setq lsp-idle-delay 0.6)
+         (setq lsp-rust-analyzer-server-display-inlay-hints t))
 
 (use-package lsp-ui
   :ensure
@@ -199,10 +210,10 @@
   :hook (flycheck-mode . flycheck-config-fn)
   :config (progn
             (defun flycheck-config-fn()
-             (flycheck-set-indication-mode 'left-margin)
-            (setf left-margin-width 3)
-            (set-window-buffer (selected-window) (current-buffer)))))
-
+              (flycheck-set-indication-mode 'left-margin)
+              (setf left-margin-width 3)
+              (set-window-buffer (selected-window) (current-buffer)))
+            ))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ;; auto-completion and code snippets
@@ -223,7 +234,8 @@
 (use-package company
   :ensure
   :defer 1
-  :hook (scala-mode . company-mode)
+  :init
+  (add-hook 'after-init-hook 'global-company-mode)
   :bind
   (:map company-mode-map
 	  ("<tab>". tab-indent-or-complete)
@@ -368,6 +380,39 @@
   :after (treemacs persp-mode) ;;or perspective vs. persp-mode
   :ensure t
   :config (treemacs-set-scope-type 'Perspectives))
+
+;; Flutter
+(use-package lsp-dart
+  :ensure t
+  :hook (dart-mode . lsp))
+
+
+;; Org mode setup
+(use-package org
+  :ensure t
+  :hook (org-mode . visual-line-mode)
+        (org-mode . (lambda () (abbrev-mode 1)))
+        (org-mode . (lambda () (org-bullets-mode 1)))
+  :config (setq org-hide-emphasis-markers t)
+          (org-babel-do-load-languages
+            'org-babel-load-languages
+            '(
+              (R . t)
+              (plantuml . t)
+              (shell . t)
+              (dot . t)
+              (sql . t)
+              ))
+          (font-lock-add-keywords 'org-mode
+             '(("^ *\\([-]\\) "
+               (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+          )
+
+(use-package org-bullets
+    :ensure t)
+
+(use-package plantuml-mode
+    :ensure t)
 
 
 
